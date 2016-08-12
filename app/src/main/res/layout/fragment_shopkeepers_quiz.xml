@@ -56,4 +56,14 @@
         android:layout_marginTop="30dp"
         android:columnCount="6"
         android:rowCount="1"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/howtoplay"
+        android:id="@+id/howtoplayButton"
+        android:layout_below="@+id/textView4"
+        android:layout_centerHorizontal="true"
+        android:textSize="12sp" />
 </RelativeLayout>

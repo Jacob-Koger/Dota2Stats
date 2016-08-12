@@ -1,11 +1,13 @@
 package com.jacob.dota2.dota2Application.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -23,8 +25,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jacob.dota2.dota2Application.CacheStrategy;
 import com.example.jacobkoger.dota2Application.R;
+import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
+import com.google.example.games.basegameutils.BaseGameUtils;
+import com.google.gson.Gson;
+import com.jacob.dota2.dota2Application.CacheStrategy;
 import com.jacob.dota2.dota2Application.RecentMatches.RecentMatchesContract;
 import com.jacob.dota2.dota2Application.RecentMatches.RecentMatchesFragment;
 import com.jacob.dota2.dota2Application.RecentMatches.RecentMatchesPresenter;
@@ -35,7 +44,6 @@ import com.jacob.dota2.dota2Application.data.accountinfo.AccountInfo;
 import com.jacob.dota2.dota2Application.data.accountinfo.Player;
 import com.jacob.dota2.dota2Application.data.hero.Hero;
 import com.jacob.dota2.dota2Application.data.hero.HeroesList;
-import com.google.gson.Gson;
 import com.jacob.dota2.dota2Application.shopkeepersquiz.ShopkeepersQuizFragment;
 import com.squareup.picasso.Picasso;
 
@@ -50,19 +58,35 @@ import java.util.Objects;
 
 import static com.jacob.dota2.dota2Application.util.NetworkUtils.isConnected;
 
-public class MainActivity extends AppCompatActivity {
-    final List<Hero> mHeroes = new ArrayList<>();
-    TextView RealName;
-    TextView Username;
-    TextView ProfileURL;
-    ImageView ProfilePicture;
-    NavigationView nvDrawer;
+public class MainActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        View.OnClickListener {
+
+    private static int RC_SIGN_IN = 9001;
+    private final List<Hero> mHeroes = new ArrayList<>();
+    private TextView RealName;
+    private TextView Username;
+    private TextView ProfileURL;
+    private ImageView ProfilePicture;
+    private NavigationView nvDrawer;
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawer;
     private Toolbar toolbar;
     private RecentMatchesContract.Presenter presenter;
     private String accountid;
     private int number = 9;
+    private boolean mResolvingConnectionFailure = false;
+    private boolean mAutoStartSignInflow = true;
+    private boolean mSignInClicked = false;
+    private FloatingActionsMenu googleplaymenu;
+    private FloatingActionButton SignIn;
+    private FloatingActionButton SignOut;
+    private FloatingActionButton ShowAchievements;
+
+
+    private GoogleApiClient googleApiClient;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,6 +117,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
+                .build();
+
 
         SharedPreferences sharedPreferences = getSharedPreferences("player_id", Context.MODE_PRIVATE);
         accountid = sharedPreferences.getString("player_id", null);
@@ -104,7 +134,16 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        googleplaymenu = (FloatingActionsMenu) findViewById(R.id.GoogleGamesMenu);
+        SignIn = (FloatingActionButton) findViewById(R.id.SignIn);
+        SignIn.setOnClickListener(this);
+        SignOut = (FloatingActionButton) findViewById(R.id.SignOut);
+        SignOut.setOnClickListener(this);
+        ShowAchievements = (FloatingActionButton) findViewById(R.id.ShowAchievements);
+        ShowAchievements.setOnClickListener(this);
+        googleplaymenu.setVisibility(View.GONE);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbaractionbar);
         setSupportActionBar(toolbar);
 
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -124,18 +163,21 @@ public class MainActivity extends AppCompatActivity {
 
                             getSupportFragmentManager().beginTransaction()
                                     .replace(R.id.flContent, recentMatches)
+                                    .addToBackStack(null)
                                     .commit();
                             onStart();
                             item.setCheckable(true);
                             item.setChecked(true);
                             setTitle(item.getTitle());
-                        } else if(Objects.equals(title, "Shopkeeper's Quiz")){
+                        } else if (Objects.equals(title, "Shopkeeper's Quiz")) {
                             getSupportFragmentManager().beginTransaction()
                                     .replace(R.id.flContent, shopkeepersQuizFragment)
+                                    .addToBackStack(null)
                                     .commit();
                             item.setCheckable(true);
                             item.setChecked(true);
                             setTitle(item.getTitle());
+                            googleplaymenu.setVisibility(View.VISIBLE);
                         } else {
                             Fragment fragment = null;
                             Class fragmentClass;
@@ -177,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
             nvDrawer.removeHeaderView(headerView);
 
             nvDrawer.addHeaderView(header);
+
             Log.d("header1", "hit1");
 
         } else {
@@ -192,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
             Username = (TextView) headerView.findViewById(R.id.username);
             ProfilePicture = (ImageView) headerView.findViewById(R.id.profilepic);
             ProfileURL = (TextView) headerView.findViewById(R.id.profileURL);
+
             ProfilePicture.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -206,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        Games.Achievements.unlock(googleApiClient, getString(R.string.easter_egg_achievement));
                         number = 9;
                     }
                 }
@@ -293,5 +338,57 @@ public class MainActivity extends AppCompatActivity {
         MenuItem item = menu.findItem(R.id.menu_nav_recent);
         item.setCheckable(true);
         item.setChecked(true);
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Toast.makeText(this, Games.getCurrentAccountName(googleApiClient), Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        if (mResolvingConnectionFailure) {
+            return;
+        }
+
+
+        if (mSignInClicked || mAutoStartSignInflow) {
+            mAutoStartSignInflow = false;
+            mSignInClicked = false;
+            mResolvingConnectionFailure = true;
+
+            if (!BaseGameUtils.resolveConnectionFailure(this,
+                    googleApiClient, connectionResult,
+                    RC_SIGN_IN, "There was a sign in Error")) {
+                mResolvingConnectionFailure = false;
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(view.getId() == R.id.SignIn){
+            mSignInClicked = true;
+            SignIn.setVisibility(View.GONE);
+            SignOut.setVisibility(View.VISIBLE);
+            ShowAchievements.setVisibility(View.VISIBLE);
+            googleApiClient.connect();
+        } else if (view.getId() == R.id.SignOut){
+            mSignInClicked = false;
+            SignOut.setVisibility(View.GONE);
+            ShowAchievements.setVisibility(View.GONE);
+            SignIn.setVisibility(View.VISIBLE);
+            Games.signOut(googleApiClient);
+
+        } else if (view.getId() == R.id.ShowAchievements){
+            final Intent intent = Games.Achievements.getAchievementsIntent(googleApiClient);
+            startActivityForResult(intent, 5001);
+        }
     }
 }

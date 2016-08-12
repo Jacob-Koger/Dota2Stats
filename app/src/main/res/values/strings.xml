@@ -4,5 +4,6 @@
     <string name="drawer_close">Close navigation drawer</string>
     <string name="radiantWin">Radiant Won!</string>
     <string name="direWin">Dire Won!</string>
+    <string name="howtoplay"><u>How to play</u></string>
 
 </resources>

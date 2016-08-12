@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "260160345272",
+    "project_id": "dota-2-statistics-63814242"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260160345272:android:3f00030d4a8a5329",
+        "android_client_info": {
+          "package_name": "com.jacob.dota2.dota2Application"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260160345272-2odhm412ni6unsta7u6daasknjq4khql.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jacob.dota2.dota2Application",
+            "certificate_hash": "A9F8CEFDA43598F0A518B5EB00989303D878AA50"
+          }
+        },
+        {
+          "client_id": "260160345272-k79n9qkhjk5d1okf3n5i3ht7t0cm8vra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfHgr1sFcq2a3SQ8mWfnIQOUyciP5CMWg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

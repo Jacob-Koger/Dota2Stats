@@ -43,6 +43,7 @@ public class ItemChoiceContainer extends GridLayout{
 
     public void BindIcons(int ResID, int index){
         ImageView imageView = ((ImageView) getChildAt(index));
+        imageView.setTag(index);
         imageView.setImageResource(ResID);
     }
 }

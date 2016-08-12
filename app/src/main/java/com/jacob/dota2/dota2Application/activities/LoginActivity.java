@@ -47,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (!keyprefs.contains("key")) {
                 }
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                 startActivity(intent);
                 finish();
             }
@@ -55,7 +54,6 @@ public class LoginActivity extends AppCompatActivity {
             if (!keyprefs.contains("key")) {
             }
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             startActivity(intent);
             finish();
         }
